@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-
-static void Part1()
+﻿static void Part1()
 {
     string result = File.ReadAllText("measurements-1.txt");
     string[] measurements = result.Split("\n");
