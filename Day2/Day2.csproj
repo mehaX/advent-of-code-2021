@@ -8,6 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="input-1.txt" CopyToOutputDirectory="Always" />
+        <None Include="input.txt" CopyToOutputDirectory="Always" />
     </ItemGroup>
 </Project>
