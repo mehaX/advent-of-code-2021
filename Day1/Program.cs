@@ -1,11 +1,10 @@
 ﻿static void Part1()
 {
-    string result = File.ReadAllText("measurements-1.txt");
-    string[] measurements = result.Split("\n");
+    var input = File.ReadLines("input.txt").ToList();
 
     int? prevNumber = null;
     var count = 0;
-    foreach(var measurement in measurements)
+    foreach(var measurement in input)
     {
         var nextNumber = Convert.ToInt32(measurement);
         if (prevNumber != null && nextNumber > prevNumber)
@@ -21,14 +20,13 @@
 
 static void Part2()
 {
-    string result = File.ReadAllText("measurements-2.txt");
-    var measurements = result.Split("\n").ToList();
+    var input = File.ReadLines("input.txt").ToList();
 
     int? prevSum = null;
     var count = 0;
-    for (var index = 0; index < measurements.Count; index++)
+    for (var index = 0; index < input.Count; index++)
     {
-        var nextSum = measurements.Skip(index).Take(3).Select(m => Convert.ToInt32(m)).Sum();
+        var nextSum = input.Skip(index).Take(3).Select(m => Convert.ToInt32(m)).Sum();
         if (prevSum != null && nextSum > prevSum)
         {
             count++;
