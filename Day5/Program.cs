@@ -4,6 +4,26 @@ static void Part1()
     var input = File.ReadLines("input.txt");
     var lines = input.Select(row => new Line(row))
         .Where(l => l.A.X == l.B.X || l.A.Y == l.B.Y).ToList();
+
+    var count = CalculateCount(lines);
+
+    Console.WriteLine($"Part1: {count}");
+}
+static void Part2()
+{
+    var input = File.ReadLines("input.txt");
+    var lines = input.Select(row => new Line(row)).ToList();
+
+    var count = CalculateCount(lines);
+
+    Console.WriteLine($"Part2: {count}");
+}
+
+Part1();
+Part2();
+
+static int CalculateCount(List<Line> lines)
+{
     var countPoints = new Dictionary<(int, int), int>();
 
     var count = 0;
@@ -27,10 +47,8 @@ static void Part1()
         }
     }
 
-    Console.WriteLine($"Part1: {count}");
+    return count;
 }
-
-Part1();
 
 class Point
 {
@@ -67,14 +85,16 @@ class Line
     public List<Point> GeneratePoints()
     {
         var result = new List<Point>();
-
-        for (var x = Math.Min(A.X, B.X); x <= Math.Max(A.X, B.X); x++)
+        var increaseX = Math.Sign(B.X - A.X);
+        var increaseY = Math.Sign(B.Y - A.Y);
+        
+        var nextPoint = new Point(A.X, A.Y);
+        while (nextPoint.X != B.X || nextPoint.Y != B.Y)
         {
-            for (var y = Math.Min(A.Y, B.Y); y <= Math.Max(A.Y, B.Y); y++)
-            {
-                result.Add(new Point(x, y));
-            }
+            result.Add(nextPoint);
+            nextPoint = new Point(nextPoint.X + increaseX, nextPoint.Y + increaseY);
         }
+        result.Add(B);
 
         return result;
     }
