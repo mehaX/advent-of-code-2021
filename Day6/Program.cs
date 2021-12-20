@@ -1,30 +1,31 @@
-﻿static void Part1()
+﻿static void Part(int days)
 {
     var input = File.ReadAllText("input.txt");
-    var fishes = input.Split(",").Select(c => Convert.ToInt32(c)).ToList();
-    var days = 80;
-
-    // Console.WriteLine($"Initial state: " + string.Join(", ", fishes));
-    for (var day = 1; day <= days; day++)
+    var fishes = input.Split(",").Select(c => Convert.ToInt64(c)).ToList();
+    var fishesCount = new long[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    foreach (var fish in fishes)
     {
-        var totalFishes = fishes.Count;
-        for (var i = 0; i < totalFishes; i++)
-        {
-            if (fishes[i] == 0)
-            {
-                fishes.Add(8);
-                fishes[i] = 7;
-            }
-
-            fishes[i]--;
-        }
-
-        // Console.WriteLine($"Day {day}: " + string.Join(", ", fishes));
+        fishesCount[fish]++;
     }
 
-    var count = fishes.Count;
+    for (var day = 1; day <= days; day++)
+    {
+        var newFishes = fishesCount[0];
+        fishesCount[0] = fishesCount[1];
+        fishesCount[1] = fishesCount[2];
+        fishesCount[2] = fishesCount[3];
+        fishesCount[3] = fishesCount[4];
+        fishesCount[4] = fishesCount[5];
+        fishesCount[5] = fishesCount[6];
+        fishesCount[6] = fishesCount[7] + newFishes;
+        fishesCount[7] = fishesCount[8];
+        fishesCount[8] = newFishes;
+    }
+
+    var count = fishesCount.Sum();
     
-    Console.WriteLine($"Part1: {count}");
+    Console.WriteLine($"Result for {days} days: {count}");
 }
 
-Part1();
+Part(80);
+Part(256);
