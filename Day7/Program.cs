@@ -23,7 +23,32 @@ static void Part1()
     Console.WriteLine($"Part1: Crab {bestPosition.HPosition} with total fuel {bestPosition.TotalFuel}");
 }
 
+static void Part2()
+{
+    var input = File.ReadAllText("input.txt").Split(",");
+    var crabs = new List<Crab>();
+
+    foreach (var number in input)
+    {
+        crabs.Add(new Crab(Convert.ToInt32(number)));
+    }
+    
+    foreach (var crab1 in crabs)
+    {
+        foreach (var crab2 in crabs)
+        {
+            var distance = crab2.CalcFuel(crab1);
+            crab1.AddFuel(distance);
+        }
+    }
+
+    var bestPosition = crabs.OrderBy(pos => pos.TotalFuel).First();
+
+    Console.WriteLine($"Part2: Crab {bestPosition.HPosition} with total fuel {bestPosition.TotalFuel}");
+}
+
 Part1();
+Part2();
 
 class Crab
 {
@@ -44,6 +69,14 @@ class Crab
     public int CalcDistance(Crab crab)
     {
         return Math.Abs(crab.HPosition - this.HPosition);
+    }
+
+    public int CalcFuel(Crab crab)
+    {
+        var n = CalcDistance(crab);
+        var a = 1;
+        var l = n;
+        return n * (a + l) / 2;
     }
 }
 
