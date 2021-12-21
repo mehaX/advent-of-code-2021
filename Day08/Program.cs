@@ -82,20 +82,6 @@ static bool InnerContains(string n1, string n2)
     return ContainsSegment(n1, n2) && ContainsSegment(n2, n1);
 }
 
-static string MatchesSegments(string n1, string n2)
-{
-    var s = "";
-    foreach (var c in n1)
-    {
-        if (n2.Contains(c))
-        {
-            s += c;
-        }
-    }
-
-    return s;
-}
-
 static string DistinctSegments(string n1, string n2)
 {
     var s = "";
