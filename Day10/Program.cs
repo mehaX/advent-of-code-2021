@@ -32,7 +32,57 @@ static void Part1()
     Console.WriteLine($"Part1: {score}");
 }
 
+static void Part2()
+{
+    var input = File.ReadLines("input.txt");
+    var open = new[] { '(', '[', '{', '<' };
+    var close = new[] { ')', ']', '}', '>' };
+    var scoreboard = new[] { 1, 2, 3, 4 };
+
+    List<long> scores = new();
+    foreach (var line in input)
+    {
+        var isValid = true;
+        var stack = new Stack();
+        long score = 0;
+        foreach (var c in line.ToArray())
+        {
+            if (open.Contains(c))
+            {
+                stack.Add(c);
+            }
+            else if (close.Contains(c))
+            {
+                if (!stack.Matches(c))
+                {
+                    isValid = false;
+                    break;
+                }
+                
+                _ = stack.Remove();
+            }
+        }
+
+        if (isValid)
+        {
+            while (!stack.IsEmpty)
+            {
+                var c = stack.Remove();
+                score = score * 5 + scoreboard[Array.IndexOf(open, c)];
+            }
+            scores.Add(score);
+        }
+    }
+
+    var middleScoreIndex = (int)(scores.Count / 2.0);
+
+    var totalScore = scores.OrderBy(s => s).ToArray()[middleScoreIndex];
+
+    Console.WriteLine($"Part2: {totalScore}");
+}
+
 Part1();
+Part2();
 
 class Stack
 {
@@ -62,4 +112,6 @@ class Stack
         var last = mContent.LastOrDefault();
         return mMatches.ContainsKey(last) && mMatches[last] == c;
     }
+
+    public bool IsEmpty => !mContent.Any();
 }
