@@ -1,4 +1,4 @@
-﻿using Day4;
+﻿using Day04;
 
 var input = File.ReadAllText("input.txt");
 var part1 = new Part1(input).Calculate();
