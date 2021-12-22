@@ -3,7 +3,7 @@
     var matrix = GetMatrix();
 
     var count = 0;
-    for (int interal = 0; interal < totalIntervals; interal++)
+    for (int interval = 0; interval < totalIntervals; interval++)
     {
         for (var row = 0; row < matrix.GetLength(0); row++)
         {
@@ -17,6 +17,31 @@
     }
 
     Console.WriteLine($"Part1: {count}");
+}
+static void Part2()
+{
+    var matrix = GetMatrix();
+
+    var simul = false;
+    int interval;
+    for (interval = 0; !simul; interval++)
+    {
+        for (var row = 0; row < matrix.GetLength(0); row++)
+        {
+            for (var col = 0; col < matrix.GetLength(1); col++)
+            {
+                IncreaseValue(ref matrix, row, col);
+            }
+        }
+
+        var newCount = Flash(ref matrix);
+        if (newCount == matrix.Length)
+        {
+            simul = true;
+        }
+    }
+
+    Console.WriteLine($"Part2: {interval}");
 }
 
 static void IncreaseValue(ref int[,] matrix, int row, int col)
@@ -94,3 +119,4 @@ static int[,] GetMatrix()
 }
 
 Part1(100);
+Part2();
