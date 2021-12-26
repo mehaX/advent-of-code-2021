@@ -1,5 +1,5 @@
 ﻿
-static int Part(int? maxIntervals = int.MaxValue)
+static (int result, bool[,] matrix) Part(int? maxIntervals = int.MaxValue)
 {
     GetInput(out var points, out var instructions);
     var matrix = GetMatrixFromPoints(points);
@@ -15,13 +15,31 @@ static int Part(int? maxIntervals = int.MaxValue)
         }
     }
 
-    return CountPoints(matrix);
+    return (CountPoints(matrix), matrix);
 }
 
 static void Part1()
 {
-    var result = Part(1);
+    var result = Part(1).result;
     Console.WriteLine($"Part1 result: {result}");
+}
+
+static void Part2()
+{
+    var result = Part().matrix;
+
+    Console.WriteLine("Part2 password:");
+    for (var row = 0; row < result.GetLength(0); row++)
+    {
+        for (var col = 0; col < result.GetLength(1); col++)
+        {
+            Console.Write(result[row, col] ? '#' : ' ');
+        }
+
+        Console.WriteLine();
+    }
+
+    Console.WriteLine();
 }
 
 static void GetInput(out List<(int, int)> points, out List<(char, int)> instructions)
@@ -142,3 +160,4 @@ static int CountPoints(bool[,] matrix)
 }
 
 Part1();
+Part2();
