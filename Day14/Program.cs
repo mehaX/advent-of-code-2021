@@ -1,30 +1,41 @@
 ﻿
-static string Part(int maxSteps = 1)
+static void Part(int maxSteps = 1)
 {
+    var time = DateTime.Now;
     ReadInput(out var template, out var pairInsertion);
-
-    var result = "" + template;
-    for (int step = 0; step < maxSteps; step++)
+    var counts = string.Join("", pairInsertion.Select(p => p.Item1)).ToCharArray().Distinct().ToDictionary(c => c, _ => (long)0);
+    
+    for (var i = 0; i < template.Length; i++)
     {
-        var newPairs = "";
-        for (var index = 0; index < result.Length - 1; index++)
-        {
-            var pair = result.Substring(index, 2);
-            var newElements = GetElementFromPair(pair, pairInsertion);
-            newPairs += $"{pair[0]}{newElements}";
-        }
-
-        newPairs += result.Last();
-
-        result = newPairs;
+        counts[template[i]]++;
+    }
+    for (var i = 0; i < template.Length - 1; i++)
+    {
+        CalculateDepth(template.Substring(i, 2).ToCharArray(), 1, maxSteps - 1, pairInsertion, ref counts);
     }
 
-    return result;
+    var highest = counts.Max(e => e.Value);
+    var lowest = counts.Min(e => e.Value);
+    var output = highest - lowest;
+    var timestamp = DateTime.Now.Subtract(time).TotalSeconds;
+    Console.WriteLine($"Result with {maxSteps}: {output} {timestamp}, steps: " + string.Join(", ", counts.Select(kvp => kvp.Key + "=" + kvp.Value)));
 }
 
-static char GetElementFromPair(string pair, List<(string, char)> pairInsertion)
+static void CalculateDepth(char[] pair, int depth, int maxDepth, List<(string, char)> pairInsertion, ref Dictionary<char, long> counts)
 {
-    return pairInsertion.First(p => p.Item1 == pair).Item2;
+    var newElement = GetElementFromPair(pair, pairInsertion);
+    counts[newElement]++;
+
+    if (depth <= maxDepth)
+    {
+        CalculateDepth(new []{pair[0], newElement}, depth + 1, maxDepth, pairInsertion, ref counts);
+        CalculateDepth(new[]{newElement, pair[1]}, depth + 1, maxDepth, pairInsertion, ref counts);
+    }
+}
+
+static char GetElementFromPair(char[] pair, List<(string, char)> pairInsertion)
+{
+    return pairInsertion.First(p => p.Item1[0] == pair[0] && p.Item1[1] == pair[1]).Item2;
 }
 
 static void ReadInput(out string template, out List<(string, char)> pairInsertion)
@@ -42,25 +53,15 @@ static void ReadInput(out string template, out List<(string, char)> pairInsertio
 
 static void Part1()
 {
-    var elements = Part(10);
-
-    Dictionary<char, int> counts = new();
-    foreach (var element in elements.ToArray())
+    for (int steps = 2; steps <= 40; steps++)
     {
-        if (counts.ContainsKey(element))
-        {
-            counts[element]++;
-        }
-        else
-        {
-            counts.Add(element, 1);
-        }
+        Part(steps);
     }
-
-    var highest = counts.Max(e => e.Value);
-    var lowest = counts.Min(e => e.Value);
-    var result = highest - lowest;
-    Console.WriteLine($"Part1 result: {result}");
+}
+static void Part2()
+{
+    Part(40);
 }
 
 Part1();
+Part2();
