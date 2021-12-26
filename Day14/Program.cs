@@ -1,36 +1,61 @@
 ﻿
-static void Part(int maxSteps = 1)
+static void Calculate(int maxSteps)
 {
     var time = DateTime.Now;
     ReadInput(out var template, out var pairInsertion);
     var counts = string.Join("", pairInsertion.Select(p => p.Item1)).ToCharArray().Distinct().ToDictionary(c => c, _ => (long)0);
+    List<(int depth, char[] pair, Dictionary<char, long> counts)> track = new();
     
-    for (var i = 0; i < template.Length; i++)
+    foreach (var t in template)
     {
-        counts[template[i]]++;
+        counts[t]++;
     }
     for (var i = 0; i < template.Length - 1; i++)
     {
-        CalculateDepth(template.Substring(i, 2).ToCharArray(), 1, maxSteps - 1, pairInsertion, ref counts);
+        CalculateDepth(template.Substring(i, 2).ToCharArray(), 1, maxSteps, pairInsertion, ref counts, ref track);
     }
 
     var highest = counts.Max(e => e.Value);
     var lowest = counts.Min(e => e.Value);
     var output = highest - lowest;
     var timestamp = DateTime.Now.Subtract(time).TotalSeconds;
-    Console.WriteLine($"Result with {maxSteps}: {output} {timestamp}, steps: " + string.Join(", ", counts.Select(kvp => kvp.Key + "=" + kvp.Value)));
+    Console.WriteLine($"Result with steps: {maxSteps}, result {output}, time: {timestamp}");
 }
 
-static void CalculateDepth(char[] pair, int depth, int maxDepth, List<(string, char)> pairInsertion, ref Dictionary<char, long> counts)
+static Dictionary<char, long> CalculateDepth(char[] pair, int depth, int maxDepth, List<(string, char)> pairInsertion, ref Dictionary<char, long> counts,
+    ref List<(int depth, char[] pair, Dictionary<char, long> counts)> track)
 {
+    var existing = track.FirstOrDefault(t => t.depth == depth && t.pair[0] == pair[0] && t.pair[1] == pair[1]);
+    if (existing.depth != 0)
+    {
+        foreach (var count in existing.counts)
+        {
+            counts[count.Key] += count.Value;
+        }
+    
+        return existing.counts;
+    }
+    
     var newElement = GetElementFromPair(pair, pairInsertion);
     counts[newElement]++;
 
-    if (depth <= maxDepth)
+    Dictionary<char, long> newTrack = counts.ToDictionary(d => d.Key, _ => (long)0);
+    newTrack[newElement]++;
+    
+    if (depth < maxDepth)
     {
-        CalculateDepth(new []{pair[0], newElement}, depth + 1, maxDepth, pairInsertion, ref counts);
-        CalculateDepth(new[]{newElement, pair[1]}, depth + 1, maxDepth, pairInsertion, ref counts);
+        Dictionary<char, long>[] calculated = new Dictionary<char, long>[2];
+        calculated[0] = CalculateDepth(new []{pair[0], newElement}, depth + 1, maxDepth, pairInsertion, ref counts, ref track);
+        calculated[1] = CalculateDepth(new[]{newElement, pair[1]}, depth + 1, maxDepth, pairInsertion, ref counts, ref track);
+        
+        foreach (var newTrackKey in newTrack.Keys)
+        {
+            newTrack[newTrackKey] += calculated[0][newTrackKey] + calculated[1][newTrackKey];
+        }
     }
+
+    track.Add((depth, pair, newTrack));
+    return newTrack;
 }
 
 static char GetElementFromPair(char[] pair, List<(string, char)> pairInsertion)
@@ -51,17 +76,7 @@ static void ReadInput(out string template, out List<(string, char)> pairInsertio
     }).ToList();
 }
 
-static void Part1()
+for (int steps = 1; steps <= 60; steps++)
 {
-    for (int steps = 2; steps <= 40; steps++)
-    {
-        Part(steps);
-    }
+    Calculate(steps);
 }
-static void Part2()
-{
-    Part(40);
-}
-
-Part1();
-Part2();
