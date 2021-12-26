@@ -44,13 +44,12 @@ static Dictionary<char, long> CalculateDepth(char[] pair, int depth, int maxDept
     
     if (depth < maxDepth)
     {
-        Dictionary<char, long>[] calculated = new Dictionary<char, long>[2];
-        calculated[0] = CalculateDepth(new []{pair[0], newElement}, depth + 1, maxDepth, pairInsertion, ref counts, ref track);
-        calculated[1] = CalculateDepth(new[]{newElement, pair[1]}, depth + 1, maxDepth, pairInsertion, ref counts, ref track);
+        var leftBranch = CalculateDepth(new []{pair[0], newElement}, depth + 1, maxDepth, pairInsertion, ref counts, ref track);
+        var rightBranch = CalculateDepth(new[]{newElement, pair[1]}, depth + 1, maxDepth, pairInsertion, ref counts, ref track);
         
         foreach (var newTrackKey in newTrack.Keys)
         {
-            newTrack[newTrackKey] += calculated[0][newTrackKey] + calculated[1][newTrackKey];
+            newTrack[newTrackKey] += leftBranch[newTrackKey] + rightBranch[newTrackKey];
         }
     }
 
