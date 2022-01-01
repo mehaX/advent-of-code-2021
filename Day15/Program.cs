@@ -3,74 +3,37 @@ using Previous = System.Collections.Generic.Dictionary<Node, Node>;
 using Nodes = System.Collections.Generic.List<Node>;
 using EdgeWeights = System.Collections.Generic.List<EdgeWeight>;
 
-static void ShortestPathBidirectionalSearch(int[,] matrix, ref EdgeWeights queue, ref EdgeWeights visitedOwn,
-    EdgeWeights visitedOther, ref Previous previous, bool isBackwards)
-{
-    if (!queue.Any())
-    {
-        return;
-    }
-
-    var ew = queue.First();
-    queue.RemoveAt(0);
-    var dist = ew.Distance;
-
-    var touchNode = visitedOther.FirstOrDefault(v => v.Neighbour.Equals(ew.Neighbour));
-    if (touchNode != null)
-    {
-        return;
-    }
-
-    var adjList = AdjacentNodes(matrix, ew.Neighbour);
-    foreach (var neighbour in adjList)
-    {
-        if (visitedOwn.FindIndex(d => d.Neighbour.Equals(neighbour)) == -1)
-        {
-            if (isBackwards)
-            {
-                previous.TryAdd(ew.Neighbour, neighbour);
-            }
-            else
-            {
-                previous.TryAdd(neighbour, ew.Neighbour);
-            }
-            queue.Add(new(neighbour, dist + 1));
-            visitedOwn.Add(new(neighbour, dist + 1));
-        }
-    }
-}
-
-static (int distance, Nodes path) BidirectionalSearch(int[,] matrix, Node startNode, Node stopNode)
+static (int distance, Previous previous) BreadthFirstSearch(int[,] matrix, Node startNode, Node stopNode)
 {
     var previous = new Previous();
-    var visited1 = new EdgeWeights();
-    var visited2 = new EdgeWeights();
-    var queue1 = new EdgeWeights();
-    var queue2 = new EdgeWeights();
-    var ew1 = new EdgeWeight(startNode, 0);
-    var ew2 = new EdgeWeight(stopNode, 0);
-    queue1.Add(ew1);
-    queue2.Add(ew2);
-    visited1.Add(ew1);
-    visited2.Add(ew2);
+    var visited = new Nodes();
+    var queue = new EdgeWeights();
+    visited.Add(startNode);
+    queue.Add(new EdgeWeight(startNode, 0));
 
-    while (queue1.Any() || queue2.Any())
+    while (queue.Any())
     {
-        ShortestPathBidirectionalSearch(matrix, ref queue1, ref visited1, visited2, ref previous, false);
-        ShortestPathBidirectionalSearch(matrix, ref queue2, ref visited2, visited1, ref previous, true);
+        var ew = queue.First();
+        queue.RemoveAt(0);
+        
+        if (ew.Neighbour == stopNode)
+        {
+            return (ew.Distance, previous);
+        }
+
+        var neighbours = AdjacentNodes(matrix, ew.Neighbour);
+        foreach (var neighbour in neighbours)
+        {
+            if (!visited.Contains(neighbour))
+            {
+                previous[neighbour] = ew.Neighbour;
+                queue.Add(new (neighbour, ew.Distance + 1));
+                visited.Add(neighbour);
+            }
+        }
     }
 
-    var path = new Nodes();
-    var node = stopNode;
-    do
-    {
-        path.Add(node);
-        node = previous[node];
-    } while (node != startNode);
-
-    path.Reverse();
-
-    return (path.Select(p => p.Value).Sum(), path);
+    return (-1, previous);
 }
 
 static Node[] AdjacentNodes(int[,] matrix, Node node)
@@ -93,9 +56,19 @@ static void Part1()
     var startNode = new Node(new(0, 0), matrix[0, 0]);
     var stopNode = new Node(new(matrix.GetLength(1) - 1, matrix.GetLength(0) - 1),
         matrix[matrix.GetLength(0) - 1, matrix.GetLength(1) - 1]);
-    var result = BidirectionalSearch(matrix, startNode, stopNode);
+    var result = BreadthFirstSearch(matrix, startNode, stopNode);
+    
+    var path = new Nodes();
+    var n = stopNode;
+    do
+    {
+        path.Add(n);
+        n = result.previous[n];
+    } while (n != startNode);
 
-    Console.WriteLine($"Part1: {result.distance}");
+    var risk = path.Select(p => p.Value).Sum();
+
+    Console.WriteLine($"Part1: {risk}");
 }
 
 
@@ -114,11 +87,6 @@ static int[,] ReadInput()
 
     return matrix;
 }
-
-// static int CalculateRisk(int[,] matrix, Path path)
-// {
-//     return path.Select(p => matrix[p.y, p.x]).Sum();
-// }
 
 Part1();
 
