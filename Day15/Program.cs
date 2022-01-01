@@ -1,61 +1,76 @@
 ﻿using Path = System.Collections.Generic.Dictionary<Point, Point>;
-using Visited = System.Collections.Generic.Dictionary<Point, int>;
+using Previous = System.Collections.Generic.Dictionary<Node, Node>;
+using Nodes = System.Collections.Generic.List<Node>;
+using EdgeWeights = System.Collections.Generic.List<EdgeWeight>;
 
-
-static (int distance, List<Node> path) BellmanFord(int[,] matrix, List<Node> nodes, Node startNode, Node stopNode, int maxNeighbours)
+static void ShortestPathBidirectionalSearch(int[,] matrix, ref EdgeWeights queue, ref EdgeWeights visitedOwn,
+    EdgeWeights visitedOther, ref Previous previous, bool isBackwards)
 {
-    var previous = new Dictionary<Node, Node>();
-    var distances = nodes.ToDictionary(n => n, _ => int.MaxValue);
-    distances[startNode] = 0;
-
-    for (var i = 0; i < maxNeighbours - 1; i++)
+    if (!queue.Any())
     {
-        // Console.Write($"Step {i}: ");
-        var cTime = DateTime.Now;
-        foreach (var node in nodes)
+        return;
+    }
+
+    var ew = queue.First();
+    queue.RemoveAt(0);
+    var dist = ew.Distance;
+
+    var touchNode = visitedOther.FirstOrDefault(v => v.Neighbour.Equals(ew.Neighbour));
+    if (touchNode != null)
+    {
+        return;
+    }
+
+    var adjList = AdjacentNodes(matrix, ew.Neighbour);
+    foreach (var neighbour in adjList)
+    {
+        if (visitedOwn.FindIndex(d => d.Neighbour.Equals(neighbour)) == -1)
         {
-            var neighbours = AdjacentNodes(matrix, node);
-            var edgeWeights = EdgeWeights(neighbours);
-            foreach (var neighbour in neighbours)
+            if (isBackwards)
             {
-                var newPathLength = distances[node] + edgeWeights[neighbour];
-                var oldPathLength = distances[neighbour];
-                if (newPathLength < oldPathLength)
-                {
-                    distances[neighbour] = newPathLength;
-                    previous[neighbour] = node;
-                }
+                previous.TryAdd(ew.Neighbour, neighbour);
             }
+            else
+            {
+                previous.TryAdd(neighbour, ew.Neighbour);
+            }
+            queue.Add(new(neighbour, dist + 1));
+            visitedOwn.Add(new(neighbour, dist + 1));
         }
+    }
+}
 
-        var time = DateTime.Now.Subtract(cTime).Milliseconds;
-        // Console.WriteLine($"{time}ms");
-    }
-    
-    // foreach (var node in nodes)
-    // {
-    //     var neighbours = AdjacentNodes(nodes, node);
-    //     var edgeWeights = EdgeWeights(neighbours);
-    //     foreach (var neighbour in neighbours)
-    //     {
-    //         if (distances[node] + edgeWeights[neighbour] < distances[neighbour])
-    //         {
-    //             throw new Exception("There is a cycle with negative weight");
-    //         }
-    //     }
-    // }
-    
-    var n = stopNode;
-    var path = new List<Node>();
-    while (n != startNode)
+static (int distance, Nodes path) BidirectionalSearch(int[,] matrix, Node startNode, Node stopNode)
+{
+    var previous = new Previous();
+    var visited1 = new EdgeWeights();
+    var visited2 = new EdgeWeights();
+    var queue1 = new EdgeWeights();
+    var queue2 = new EdgeWeights();
+    var ew1 = new EdgeWeight(startNode, 0);
+    var ew2 = new EdgeWeight(stopNode, 0);
+    queue1.Add(ew1);
+    queue2.Add(ew2);
+    visited1.Add(ew1);
+    visited2.Add(ew2);
+
+    while (queue1.Any() || queue2.Any())
     {
-        path.Add(n);
-        n = previous[n];
+        ShortestPathBidirectionalSearch(matrix, ref queue1, ref visited1, visited2, ref previous, false);
+        ShortestPathBidirectionalSearch(matrix, ref queue2, ref visited2, visited1, ref previous, true);
     }
-    path.Add(startNode);
+
+    var path = new Nodes();
+    var node = stopNode;
+    do
+    {
+        path.Add(node);
+        node = previous[node];
+    } while (node != startNode);
+
     path.Reverse();
 
-    return (distances[stopNode], path);
+    return (path.Select(p => p.Value).Sum(), path);
 }
 
 static Node[] AdjacentNodes(int[,] matrix, Node node)
@@ -71,32 +86,14 @@ static Node[] AdjacentNodes(int[,] matrix, Node node)
     return points.Select(p => new Node(p, matrix[p.Y, p.X])).ToArray();
 }
 
-static Dictionary<Node, int> EdgeWeights(Node[] neighbours)
-{
-    return neighbours.ToDictionary(n => n, n => n.Value);
-}
-
 static void Part1()
 {
     var matrix = ReadInput();
-    var nodes = new List<Node>();
-    
-    for (var row = 0; row < matrix.GetLength(0); row++)
-    {
-        for (var col = 0; col < matrix.GetLength(1); col++)
-        {
-            nodes.Add(new (new (col, row), matrix[row, col]));
-        }
-    }
 
-    var startNode = nodes.First();
-    var stopNode = nodes.Last();
-    var maxNeighbours = (matrix.GetLength(0) - 2) * (matrix.GetLength(1) - 2) * 4
-                        + (matrix.GetLength(0) - 2) * 2 * 3
-                        + (matrix.GetLength(1) - 2) * 2 * 3
-                        + 4 * 2;
-
-    var result = BellmanFord(matrix, nodes, startNode, stopNode, maxNeighbours);
+    var startNode = new Node(new(0, 0), matrix[0, 0]);
+    var stopNode = new Node(new(matrix.GetLength(1) - 1, matrix.GetLength(0) - 1),
+        matrix[matrix.GetLength(0) - 1, matrix.GetLength(1) - 1]);
+    var result = BidirectionalSearch(matrix, startNode, stopNode);
 
     Console.WriteLine($"Part1: {result.distance}");
 }
