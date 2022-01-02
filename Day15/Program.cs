@@ -1,7 +1,7 @@
 ﻿
-static List<(int r, int c)> AdjacentNodes(int r, int c)
+static (int r, int c)[] AdjacentNodes(int r, int c)
 {
-    return new List<(int r, int c)>
+    return new (int r, int c)[]
     {
         (r + 1, c),
         (r - 1, c),
