@@ -10,11 +10,10 @@ static List<(int r, int c)> AdjacentNodes(int r, int c)
     };
 }
 
-static void Part1()
+static int CalculateRisk(int[,] graph)
 {
-    var matrix = ReadInput();
-    var totalRows = matrix.GetLength(0);
-    var totalCols = matrix.GetLength(1);
+    var totalRows = graph.GetLength(0);
+    var totalCols = graph.GetLength(1);
 
     var queue = new List<(int value, (int r, int c) point)> { (0, (0, 0)) };
     var locked = new List<(int r, int c)>();
@@ -25,9 +24,9 @@ static void Part1()
         var (risk, pos) = queue.First();
         queue.RemoveAt(0);
         
-        result = risk;
         if (pos.r == totalRows - 1 && pos.c == totalCols - 1)
         {
+            result = risk;
             break;
         }
 
@@ -41,13 +40,45 @@ static void Part1()
         {
             if (r >= 0 && r < totalRows && c >= 0 && c < totalCols)
             {
-                queue.Add((risk + matrix[r, c], (r, c)));
+                queue.Add((risk + graph[r, c], (r, c)));
             }
         }
         queue.Sort((a, b) => a.value < b.value ? -1 : 1);
     }
 
+    return result;
+}
+
+static void Part1()
+{
+    var input = ReadInput();
+    var result = CalculateRisk(input);
+
     Console.WriteLine($"Part1: {result}");
+}
+
+static void Part2()
+{
+    var input = ReadInput();
+    var totalRows = input.GetLength(0);
+    var totalCols = input.GetLength(1);
+    
+    var graph = new int[input.GetLength(0) * 5, input.GetLength(1) * 5];
+
+    for (int row = 0; row < graph.GetLength(0); row++)
+    {
+        for (int col = 0; col < graph.GetLength(1); col++)
+        {
+            var originalValue = input[row % totalRows, col % totalCols];
+            var newValue = originalValue + row / totalRows + col / totalCols;
+            newValue = (newValue - 1) % 9 + 1; // between 1-9
+            graph[row, col] = newValue;
+        }
+    }
+    
+    var result = CalculateRisk(graph);
+
+    Console.WriteLine($"Part2: {result}");
 }
 
 
@@ -68,4 +99,5 @@ static int[,] ReadInput()
 }
 
 Part1();
+Part2();
 
