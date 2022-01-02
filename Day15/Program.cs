@@ -1,74 +1,53 @@
-﻿using Path = System.Collections.Generic.Dictionary<Point, Point>;
-using Previous = System.Collections.Generic.Dictionary<Node, Node>;
-using Nodes = System.Collections.Generic.List<Node>;
-using EdgeWeights = System.Collections.Generic.List<EdgeWeight>;
-
-static (int distance, Previous previous) BreadthFirstSearch(int[,] matrix, Node startNode, Node stopNode)
+﻿
+static List<(int r, int c)> AdjacentNodes(int r, int c)
 {
-    var previous = new Previous();
-    var visited = new Nodes();
-    var queue = new EdgeWeights();
-    visited.Add(startNode);
-    queue.Add(new EdgeWeight(startNode, 0));
-
-    while (queue.Any())
+    return new List<(int r, int c)>
     {
-        var ew = queue.First();
-        queue.RemoveAt(0);
-        
-        if (ew.Neighbour == stopNode)
-        {
-            return (ew.Distance, previous);
-        }
-
-        var neighbours = AdjacentNodes(matrix, ew.Neighbour);
-        foreach (var neighbour in neighbours)
-        {
-            if (!visited.Contains(neighbour))
-            {
-                previous[neighbour] = ew.Neighbour;
-                queue.Add(new (neighbour, ew.Distance + 1));
-                visited.Add(neighbour);
-            }
-        }
-    }
-
-    return (-1, previous);
-}
-
-static Node[] AdjacentNodes(int[,] matrix, Node node)
-{
-    var points = new Point[]
-    {
-        new(node.Point.X - 1, node.Point.Y),
-        new(node.Point.X + 1, node.Point.Y),
-        new(node.Point.X, node.Point.Y - 1),
-        new(node.Point.X, node.Point.Y + 1),
-    }.Where(p => p.X >= 0 && p.X < matrix.GetLength(1) && p.Y >= 0 && p.Y < matrix.GetLength(0));
-
-    return points.Select(p => new Node(p, matrix[p.Y, p.X])).ToArray();
+        (r + 1, c),
+        (r - 1, c),
+        (r, c + 1),
+        (r, c - 1),
+    };
 }
 
 static void Part1()
 {
     var matrix = ReadInput();
+    var totalRows = matrix.GetLength(0);
+    var totalCols = matrix.GetLength(1);
 
-    var startNode = new Node(new(0, 0), matrix[0, 0]);
-    var stopNode = new Node(new(matrix.GetLength(1) - 1, matrix.GetLength(0) - 1),
-        matrix[matrix.GetLength(0) - 1, matrix.GetLength(1) - 1]);
-    var result = BreadthFirstSearch(matrix, startNode, stopNode);
+    var queue = new List<(int value, (int r, int c) point)> { (0, (0, 0)) };
+    var locked = new List<(int r, int c)>();
+    var result = 0;
     
-    var path = new Nodes();
-    var n = stopNode;
-    do
+    while (queue.Any())
     {
-        path.Add(n);
-        n = result.previous[n];
-    } while (n != startNode);
+        var (risk, pos) = queue.First();
+        queue.RemoveAt(0);
+        
+        result = risk;
+        if (pos.r == totalRows - 1 && pos.c == totalCols - 1)
+        {
+            break;
+        }
 
-    var risk = path.Select(p => p.Value).Sum();
+        if (locked.Contains(pos))
+        {
+            continue;
+        }
+        locked.Add(pos);
+        
+        foreach (var (r, c) in AdjacentNodes(pos.r, pos.c))
+        {
+            if (r >= 0 && r < totalRows && c >= 0 && c < totalCols)
+            {
+                queue.Add((risk + matrix[r, c], (r, c)));
+            }
+        }
+        queue.Sort((a, b) => a.value < b.value ? -1 : 1);
+    }
 
-    Console.WriteLine($"Part1: {risk}");
+    Console.WriteLine($"Part1: {result}");
 }
 
 
@@ -90,29 +69,3 @@ static int[,] ReadInput()
 
 Part1();
 
-public record Point(int X, int Y)
-{
-    public virtual bool Equals(Point? other)
-    {
-        return other != null && other.X == X && other.Y == Y;
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(X, Y);
-    }
-}
-
-public record Node(Point Point, int Value)
-{
-    public virtual bool Equals(Node? other)
-    {
-        return Point.Equals(other?.Point);
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Point, Value);
-    }
-}
-public record EdgeWeight(Node Neighbour, int Distance);
