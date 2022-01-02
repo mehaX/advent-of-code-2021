@@ -15,14 +15,14 @@ static int CalculateRisk(int[,] graph)
     var totalRows = graph.GetLength(0);
     var totalCols = graph.GetLength(1);
 
-    var queue = new List<(int value, (int r, int c) point)> { (0, (0, 0)) };
+    var queue = new PriorityQueue<(int value, (int r, int c) position), int>();
+    queue.Enqueue((0, (0, 0)), 0);
     var locked = new List<(int r, int c)>();
     var result = 0;
     
-    while (queue.Any())
+    while (queue.Count > 0)
     {
-        var (risk, pos) = queue.First();
-        queue.RemoveAt(0);
+        var (risk, pos) = queue.Dequeue();
         
         if (pos.r == totalRows - 1 && pos.c == totalCols - 1)
         {
@@ -40,10 +40,9 @@ static int CalculateRisk(int[,] graph)
         {
             if (r >= 0 && r < totalRows && c >= 0 && c < totalCols)
             {
-                queue.Add((risk + graph[r, c], (r, c)));
+                queue.Enqueue((risk + graph[r, c], (r, c)), risk + graph[r, c]);
             }
         }
-        queue.Sort((a, b) => a.value < b.value ? -1 : 1);
     }
 
     return result;
@@ -52,14 +51,19 @@ static int CalculateRisk(int[,] graph)
 static void Part1()
 {
     var input = ReadInput();
+    var cTime = DateTime.Now;
+    
     var result = CalculateRisk(input);
+    var timestamp = DateTime.Now.Subtract(cTime).TotalSeconds;
 
-    Console.WriteLine($"Part1: {result}");
+    Console.WriteLine($"Part1: {result} in {timestamp} seconds");
 }
 
 static void Part2()
 {
     var input = ReadInput();
+    var cTime = DateTime.Now;
+
     var totalRows = input.GetLength(0);
     var totalCols = input.GetLength(1);
     
@@ -77,8 +81,9 @@ static void Part2()
     }
     
     var result = CalculateRisk(graph);
+    var timestamp = DateTime.Now.Subtract(cTime).TotalSeconds;
 
-    Console.WriteLine($"Part2: {result}");
+    Console.WriteLine($"Part2: {result} in {timestamp} seconds");
 }
 
 
