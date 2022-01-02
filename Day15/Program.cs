@@ -15,14 +15,14 @@ static int CalculateRisk(int[,] graph)
     var totalRows = graph.GetLength(0);
     var totalCols = graph.GetLength(1);
 
-    var queue = new PriorityQueue<(int value, (int r, int c) position), int>();
-    queue.Enqueue((0, (0, 0)), 0);
+    var queue = new PriorityQueue<(int r, int c), int>();
+    queue.Enqueue((0, 0), 0);
     var locked = new List<(int r, int c)>();
     var result = 0;
     
     while (queue.Count > 0)
     {
-        var (risk, pos) = queue.Dequeue();
+        queue.TryDequeue(out var pos, out var risk);
         
         if (pos.r == totalRows - 1 && pos.c == totalCols - 1)
         {
@@ -40,7 +40,7 @@ static int CalculateRisk(int[,] graph)
         {
             if (r >= 0 && r < totalRows && c >= 0 && c < totalCols)
             {
-                queue.Enqueue((risk + graph[r, c], (r, c)), risk + graph[r, c]);
+                queue.Enqueue((r, c), risk + graph[r, c]);
             }
         }
     }
