@@ -25,8 +25,10 @@ static void Part1()
     
 
     var rootPackage = PackageParser.Parse(ref inputBin);
-    var result = rootPackage.CalculateVersionSum();
-    Console.WriteLine($"Part 1: {result}");
+    var part1 = rootPackage.CalculateVersionSum();
+    var part2 = rootPackage.CalculateResult();
+    Console.WriteLine($"Part 1: {part1}");
+    Console.WriteLine($"Part 2: {part2}");
 }
 
 Part1();
@@ -40,6 +42,8 @@ abstract class Package
     public abstract void RegisterPayload(ref string payload);
 
     public abstract int CalculateVersionSum();
+
+    public abstract long CalculateResult();
 }
 
 class LiteralPackage : Package
@@ -67,6 +71,11 @@ class LiteralPackage : Package
     public override int CalculateVersionSum()
     {
         return Version;
+    }
+
+    public override long CalculateResult()
+    {
+        return Value;
     }
 }
 
@@ -111,6 +120,37 @@ class OperatorPackage : Package
     public override int CalculateVersionSum()
     {
         return Version + SubPackages.Select(p => p.CalculateVersionSum()).Sum();
+    }
+
+    public override long CalculateResult()
+    {
+        var packageValues = SubPackages.Select(p => p.CalculateResult()).ToArray();
+        switch (Id)
+        {
+            case 0: // ADD
+                return packageValues.Sum();
+            
+            case 1: // MULTIPLY
+                return packageValues.Aggregate((a, b) => a * b);
+            
+            case 2: // MIN
+                return packageValues.Min();
+            
+            case 3: // MAX
+                return packageValues.Max();
+            
+            case 5: // GREATER THAN
+                return packageValues.Length >= 2 && packageValues[0] > packageValues[1] ? 1 : 0;
+            
+            case 6: // LESS THAN
+                return packageValues.Length >= 2 && packageValues[0] < packageValues[1] ? 1 : 0;
+            
+            case 7: // EQUALS
+                return packageValues.Length >= 2 && packageValues[0] == packageValues[1] ? 1 : 0;
+            
+            default:
+                return 0;
+        }
     }
 }
 
