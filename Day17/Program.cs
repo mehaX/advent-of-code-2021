@@ -8,12 +8,17 @@ static bool Targets(int velocityX, int velocityY, int[] targetX, int[] targetY, 
     var posY = 0;
     positions = new() { (posX, posY) };
 
-    while ((posX < targetX[1] && posY > targetY[1]) && !(posX >= targetX[0] && posX <= targetX[1] // TODO: refactor
-                                                                           && posY >= targetX[0] && posY <= targetY[1]))
+    while (posX < targetX.Max() && posY > targetY.Min())
     {
         posX += velocityX;
         posY += velocityY;
         positions.Add((posX, posY));
+
+        if (posX >= targetX[0] && posX <= targetX[1]
+                               && posY >= targetY[0] && posY <= targetY[1])
+        {
+            return true;
+        }
 
         if (velocityX > 0)
         {
@@ -23,21 +28,23 @@ static bool Targets(int velocityX, int velocityY, int[] targetX, int[] targetY, 
         velocityY--;
     }
 
-    return posX >= targetX[0] && posX <= targetX[1]
-                              && posY >= targetY[0] && posY <= targetY[1];
+    return false;
 }
 
-int? highestY = null;
+int highestY = 0;
+int winningCount = 0;
 
-for (var velocityY = TargetY[0] * -1; highestY == null && velocityY >= TargetY[0]; velocityY--)
+for (var velocityY = TargetY[0] * -2; velocityY >= TargetY[0]; velocityY--)
 {
-    for (var velocityX = 1; highestY == null && velocityX < TargetX[0]; velocityX++)
+    for (var velocityX = 1; velocityX <= TargetX[1]; velocityX++)
     {
         if (Targets(velocityX, velocityY, TargetX, TargetY, out var positions))
         {
-            highestY = positions.Max(p => p.y);
+            highestY = Math.Max(highestY, positions.Max(p => p.y));
+            winningCount++;
         }
     }
 }
 
 Console.WriteLine($"Part1 result: {highestY}");
+Console.WriteLine($"Part2 result: {winningCount}");
