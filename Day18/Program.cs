@@ -1,75 +1,93 @@
-﻿
-using Day18;
-using Day18.Elements;
-using Day18.Values;
+﻿using Day18;
 
-var input = File.ReadLines("input.txt").ToList();
-var inputs = new List<PairValue>();
-var allElements = new List<List<Element>>();
+var origInputs = File.ReadLines("input.txt").Select(Deserializer.DeserializePair);
 
-foreach (var s in input)
+var inputs = origInputs.ToList();
+var output = Aggregate(inputs);
+var magnitude = Actions.CalculateMagnitude(output);
+Console.WriteLine($"Part1: {magnitude}");
+
+inputs = origInputs.ToList();
+var highestMagnitude = 0;
+for (int i = 0; i < inputs.Count; i++)
 {
-    var index = 1;
-    var elements = new List<Element>();
-    var root = Deserializer.DeserializePair(s, 1, ref index, ref elements);
-    elements.Add(new PairElement(root, 1));
-    inputs.Add(root);
-    allElements.Add(elements);
-}
-
-while (inputs.Count > 1)
-{
-    var elements = allElements[0];
-    var a = inputs[0];
-    var b = inputs[1];
-
-    inputs[0] = Actions.Addition(a, b, ref elements, allElements[1]);
-    inputs.RemoveAt(1);
-    allElements.RemoveAt(1);
-   
-    Print(elements, "After addition:\t\t");
-    
-    int toSplit = -1;
-    var toExplode = -1;
-
-    while((toSplit = elements.FindIndex(e => e.IsLiteral() && (e as LiteralElement).Data.Value >= 10)) != -1
-          || (toExplode = elements.FindIndex(e => e.IsPair() && (e as PairElement).Depth > 4 && (e as PairElement).Data.ContainsLiterals())) != -1)
+    for (int j = 0; j < inputs.Count; j++)
     {
-        if (toSplit != -1)
+        if (i == j)
         {
-            Console.Write($"After split {(elements[toSplit] as LiteralElement).Data.Value}:\t\t");
-            Actions.Split(toSplit, ref elements);
-            toSplit = -1;
+            continue;
         }
 
-        if (toExplode != -1)
+        var o = Aggregate(new() { inputs[i], inputs[j] });
+        var m = Actions.CalculateMagnitude(o);
+        if (m > highestMagnitude)
         {
-            Console.Write($"After explode ({((elements[toExplode] as PairElement).Data.X as LiteralValue).Value},{((elements[toExplode] as PairElement).Data.Y as LiteralValue).Value}):\t");
-            Actions.Explode(toExplode, ref elements);
-            toExplode = -1;
+            highestMagnitude = m;
         }
-
-        Print(elements);
     }
-    allElements[0] = elements;
-   
-    Print(elements, "Result:\t\t\t");
 }
 
-static void Print(List<Element> elements, string prefix = "")
+Console.WriteLine($"Part2: {highestMagnitude}");
+
+static List<(int depth, int value)> Aggregate(List<List<(int depth, int value)>> inputs)
 {
-    Console.Write(prefix + string.Join(",", elements.Where(e => e.IsLiteral()).Select(e => (e as LiteralElement).Data.Value)));
-    Console.Write("\t\t");
-    foreach (var element in elements)
+    var output = inputs.First();
+    inputs.RemoveAt(0);
+    Print(output, "Initial state:\t\t");
+
+    Reduce(ref output);
+
+    while (inputs.Any())
     {
-        if (element.IsLiteral())
+        var second = inputs.First();
+        inputs.RemoveAt(0);
+
+        Reduce(ref second);
+
+        Print(second, "Add:\t\t\t");
+        output = Actions.Addition(output, second);
+        Print(output, "After addition:\t\t");
+        
+        Reduce(ref output);
+        Print(output, "Result:\t\t\t");
+    }
+
+    return output;
+}
+
+static void Reduce(ref List<(int depth, int value)> elements)
+{
+    while(true)
+    {
+        var toExplode = elements.FindIndex(e => e.value == -1 && e.depth > 4);
+        var toSplit = elements.FindIndex(e => e.value != -1 && e.value >= 10);
+
+        if (toExplode != -1 && elements[toExplode - 1].value != -1 && elements[toExplode - 2].value != -1)
         {
-            Console.Write($"({element.Depth})");
+            Actions.Explode(toExplode, ref elements);
+        }
+        else if (toSplit != -1)
+        {
+            Actions.Split(toSplit, ref elements);
         }
         else
         {
-            Console.Write($"[{element.Depth}]");
+            break;
         }
+        
+        Print(elements);
+    }
+}
+
+static void Print(List<(int depth, int value)> elements, string prefix = "")
+{
+    #if DEBUG
+    Console.Write(prefix + string.Join(",", elements.Where(e => e.value != -1).Select(e => e.value)));
+    Console.Write("\t\t");
+    foreach (var element in elements)
+    {
+        Console.Write(element.value != -1 ? $"({element.value})" : $"[{element.depth}]");
     }
     Console.WriteLine();
+    #endif
 }

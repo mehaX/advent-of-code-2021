@@ -1,45 +1,48 @@
-using Day18.Elements;
-using Day18.Values;
-
 namespace Day18;
 
 public class Deserializer
 {
-    public static PairValue DeserializePair(string input, int depth, ref int index, ref List<Element> elements)
+    const int Closing = -1;
+    
+    public static List<(int depth, int value)> DeserializePair(string input)
     {
-        PairValue pair = new();
-    
-        pair.X = DeserializeElement(input, depth + 1, ref index, ref elements);
-        index++; // escape `,`
-    
-        pair.Y = DeserializeElement(input, depth + 1, ref index, ref elements);
-        index++; // escape `]`
-    
-        return pair;
-    }
+        var result = new List<(int, int)>();
+        var depth = 1;
 
-    public static IElementValue DeserializeElement(string input, int currentDepth, ref int index, ref List<Element> elements)
-    {
-        if (input[index] >= '0' && input[index] <= '9')
+        var tempNumber = "";
+
+        foreach (var c in input.ToCharArray())
         {
-            int length = 1;
-            while (input[index + length] >= '0' && input[index + length] <= '9')
+            if (c is >= '0' and <= '9')
             {
-                length++;
+                tempNumber += c;
             }
+            else if (c == ',')
+            {
+                if (tempNumber != "")
+                {
+                    result.Add((depth, Convert.ToInt32(tempNumber)));
+                    tempNumber = "";
+                }
+            }
+            else if (c == '[')
+            {
+                depth++;
+            }
+            else if (c == ']')
+            {
+                if (tempNumber != "")
+                {
+                    result.Add((depth, Convert.ToInt32(tempNumber)));
+                    tempNumber = "";
+                }
 
-            var number = Convert.ToInt32(input.Substring(index, length));
-
-            index += length;
-            var literalValue = new LiteralElement(number, currentDepth);
-            elements.Add(literalValue);
-            return literalValue.Data;
+                depth--;
+                result.Add((depth, Closing));
+            }
         }
 
-        index++;
-        var subPair = new PairElement(DeserializePair(input, currentDepth, ref index, ref elements), currentDepth);
-        elements.Add(subPair);
-        return subPair.Data;
+        return result;
     }
 
 }

@@ -1,68 +1,80 @@
-using Day18.Elements;
-using Day18.Values;
-
 namespace Day18;
 
 public class Actions
 {
-    public static PairValue Addition(PairValue pair1, PairValue pair2, ref List<Element> elements, List<Element> secondElements)
+    public static List<(int depth, int value)> Addition(List<(int depth, int value)> pair1, List<(int depth, int value)> pair2)
     {
-        var newPairValue = new PairValue();
-        newPairValue.X = pair1;
-        newPairValue.Y = pair2;
-        elements.AddRange(secondElements);
+        var result = new List<(int depth, int value)>();
         
-        for (var i = 0; i < elements.Count; i++)
+        foreach (var element in pair1)
         {
-            elements[i].Depth++;
+            result.Add((element.Item1 + 1, element.Item2));
+        }
+        foreach (var element in pair2)
+        {
+            result.Add((element.Item1 + 1, element.Item2));
         }
         
-        elements.Add(new PairElement(newPairValue, 1));
-
-        return newPairValue;
+        result.Add((1, -1));
+        return result;
     }
 
-    public static void Explode(int index, ref List<Element> elements)
+    public static void Explode(int index, ref List<(int depth, int value)> elements)
     {
-        var pairElement = elements[index];
-        var newDepth = pairElement.Depth;
+        var xIndex = index - 2;
+        var yIndex = index - 1;
+        
+        var element = elements[index];
     
-        var x = (pairElement as PairElement).Data.X as LiteralValue;
-        var y = (pairElement as PairElement).Data.Y as LiteralValue;
-    
-        var xIndex = elements.FindIndex(e => e.IsLiteral() && (e as LiteralElement).Data == x);
-        var yIndex = elements.FindIndex(e => e.IsLiteral() && (e as LiteralElement).Data == y);
+        var newDepth = element.depth;
 
-        var leftLiteral = elements.Take(xIndex).LastOrDefault(e => e.IsLiteral());
-        var rightLiteral = elements.Skip(yIndex + 1).FirstOrDefault(e => e.IsLiteral());
-        if (leftLiteral != null)
+        var leftLiteralIndex = elements.Take(xIndex).ToList().FindLastIndex(e => e.value != -1);
+        var rightLiteralIndex = elements.Skip(yIndex + 1).ToList().FindIndex(e => e.value != -1) + yIndex + 1;
+
+        if (leftLiteralIndex != -1)
         {
-            (leftLiteral as LiteralElement).Data.Value += x.Value;
+            elements[leftLiteralIndex] = (elements[leftLiteralIndex].depth, elements[leftLiteralIndex].value + elements[xIndex].value);
         }
-        if (rightLiteral != null)
+        if (rightLiteralIndex != -1)
         {
-            (rightLiteral as LiteralElement).Data.Value += y.Value;
+            elements[rightLiteralIndex] = (elements[rightLiteralIndex].depth, elements[rightLiteralIndex].value + elements[yIndex].value);
         }
-    
-        elements[index] = new LiteralElement(0, newDepth);
+
+        elements[index] = (newDepth, 0);
         elements.RemoveAt(yIndex);
         elements.RemoveAt(xIndex);
     }
 
-    public static void Split(int index, ref List<Element> elements)
+    public static void Split(int index, ref List<(int depth, int value)> elements)
     {
-        var literalElement = elements[index] as LiteralElement;
-        var newDepth = literalElement.Depth;
+        var literalElement = elements[index];
+        var newDepth = literalElement.depth + 1;
 
-        var xLiteral = new LiteralValue(literalElement.Data.Value / 2);
-        var yLiteral = new LiteralValue(literalElement.Data.Value - xLiteral.Value);
+        (int depth, int value) xLiteral = (newDepth, literalElement.value / 2);
+        (int depth, int value) yLiteral = (newDepth, literalElement.value - xLiteral.value);
 
-        var pairValue = new PairValue();
-        pairValue.X = xLiteral;
-        pairValue.Y = yLiteral;
+        elements[index] = xLiteral;
+        elements.Insert(index + 1, yLiteral);
+        elements.Insert(index + 2, (newDepth - 1, -1));
+    }
 
-        elements[index] = new PairElement(pairValue, newDepth);
-        elements.Insert(index + 1, new LiteralElement(xLiteral, newDepth + 1));
-        elements.Insert(index + 2, new LiteralElement(yLiteral, newDepth + 1));
+    public static int CalculateMagnitude(List<(int depth, int value)> elements)
+    {
+        while (elements.Count > 1)
+        {
+            for (int i = 2; i < elements.Count; i++)
+            {
+                if (elements[i].value != -1 || elements[i - 1].value == -1 || elements[i - 2].value == -1)
+                {
+                    continue;
+                }
+                
+                elements[i - 2] = (elements[i - 2].depth, elements[i - 2].value * 3 + elements[i - 1].value * 2);
+                elements.RemoveAt(i);
+                elements.RemoveAt(i - 1);
+            }
+        }
+
+        return elements.First().value;
     }
 }
